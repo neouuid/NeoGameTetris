@@ -5,6 +5,8 @@ A classic Tetris game developed with [Godot Engine 4.x](https://godotengine.org/
 ## 🎮 Features
 - Standard 10x20 grid
 - 7 classic Tetromino shapes with corresponding colors
+- Responsive UI that adapts to window resizing
+- Clear layout separating game board and score/controls panel
 - Hard drop functionality
 - Score tracking system
 - Keyboard controls

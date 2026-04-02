@@ -1,30 +1,78 @@
-[gd_scene format=3 uid="uid://c6f3y2m1x4a5d"]
+[gd_scene load_steps=2 format=3 uid="uid://c6f3y2m1x4a5d"]
 
 [ext_resource type="Script" path="res://Main.gd" id="1_a2b3c"]
 
-[node name="Main" type="Node2D"]
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_a2b3c")
 
-[node name="Timer" type="Timer" parent="."]
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.05, 0.05, 1)
 
-[node name="UI" type="CanvasLayer" parent="."]
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
 
-[node name="ScoreLabel" type="Label" parent="UI"]
-offset_left = 400.0
-offset_top = 50.0
-offset_right = 500.0
-offset_bottom = 76.0
-theme_override_font_sizes/font_size = 24
+[node name="GameAreaContainer" type="MarginContainer" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2.0
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="GameRect" type="Control" parent="HBoxContainer/GameAreaContainer"]
+layout_mode = 2
+
+[node name="RightPanel" type="VBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.0
+theme_override_constants/separation = 30
+alignment = 1
+
+[node name="ScoreLabel" type="Label" parent="HBoxContainer/RightPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
 text = "Score: 0"
-
-[node name="GameOverLabel" type="Label" parent="UI"]
-visible = false
-offset_left = 350.0
-offset_top = 300.0
-offset_right = 650.0
-offset_bottom = 350.0
-theme_override_colors/font_color = Color(1, 0, 0, 1)
-theme_override_font_sizes/font_size = 48
-text = "GAME OVER"
 horizontal_alignment = 1
 
+[node name="GameOverLabel" type="Label" parent="HBoxContainer/RightPanel"]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0, 0, 1)
+theme_override_font_sizes/font_size = 48
+text = "GAME OVER
+Press Enter"
+horizontal_alignment = 1
+
+[node name="ControlsLabel" type="Label" parent="HBoxContainer/RightPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+theme_override_font_sizes/font_size = 18
+text = "Controls:
+↑ : Rotate
+←/→ : Move
+↓ : Soft Drop
+Space/Enter : Hard Drop"
+horizontal_alignment = 1
+
+[node name="Timer" type="Timer" parent="."]

@@ -1,10 +1,7 @@
-extends Node2D
+extends Control
 
 const COLS: int = 10
 const ROWS: int = 20
-const CELL_SIZE: int = 30
-const OFFSET_X: int = 50
-const OFFSET_Y: int = 50
 
 var grid: Array = []
 var current_piece: Array = []
@@ -35,15 +32,23 @@ const COLORS: Array[Color] = [
 ]
 
 @onready var timer: Timer = $Timer
-@onready var score_label: Label = $UI/ScoreLabel
-@onready var game_over_label: Label = $UI/GameOverLabel
+@onready var score_label: Label = $HBoxContainer/RightPanel/ScoreLabel
+@onready var game_over_label: Label = $HBoxContainer/RightPanel/GameOverLabel
+@onready var game_rect: Control = $HBoxContainer/GameAreaContainer/GameRect
 
 func _ready() -> void:
 	init_grid()
 	spawn_piece()
 	timer.timeout.connect(_on_timer_timeout)
 	timer.start(0.5)
+	
+	# Connect resize signal to redraw game rect
+	get_viewport().size_changed.connect(_on_viewport_resize)
+	game_rect.draw.connect(_on_game_rect_draw)
 	queue_redraw()
+
+func _on_viewport_resize() -> void:
+	game_rect.queue_redraw()
 
 func init_grid() -> void:
 	grid.clear()
@@ -64,6 +69,8 @@ func spawn_piece() -> void:
 		game_over = true
 		game_over_label.show()
 		timer.stop()
+	
+	game_rect.queue_redraw()
 
 func is_valid_position(piece: Array, grid_x: int, grid_y: int) -> bool:
 	for y in range(piece.size()):
@@ -103,13 +110,13 @@ func clear_lines() -> void:
 			var empty_row: Array = []
 			for i in range(COLS): empty_row.append(null)
 			grid.insert(0, empty_row)
-			# Do not decrement y here, because the row above just dropped into y.
 		else:
 			y -= 1
 			
 	if lines_cleared > 0:
 		score += lines_cleared * 100
 		score_label.text = "Score: " + str(score)
+	game_rect.queue_redraw()
 
 func rotate_piece() -> void:
 	var new_piece: Array = []
@@ -131,23 +138,23 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_left"):
 		if is_valid_position(current_piece, current_x - 1, current_y):
 			current_x -= 1
-			queue_redraw()
+			game_rect.queue_redraw()
 	elif event.is_action_pressed("ui_right"):
 		if is_valid_position(current_piece, current_x + 1, current_y):
 			current_x += 1
-			queue_redraw()
+			game_rect.queue_redraw()
 	elif event.is_action_pressed("ui_down"):
 		if is_valid_position(current_piece, current_x, current_y + 1):
 			current_y += 1
-			queue_redraw()
+			game_rect.queue_redraw()
 	elif event.is_action_pressed("ui_up"):
 		rotate_piece()
-		queue_redraw()
+		game_rect.queue_redraw()
 	elif event.is_action_pressed("ui_accept"): # Hard drop
 		while is_valid_position(current_piece, current_x, current_y + 1):
 			current_y += 1
 		lock_piece()
-		queue_redraw()
+		game_rect.queue_redraw()
 
 func _on_timer_timeout() -> void:
 	if not game_over:
@@ -155,7 +162,7 @@ func _on_timer_timeout() -> void:
 			current_y += 1
 		else:
 			lock_piece()
-		queue_redraw()
+		game_rect.queue_redraw()
 
 func restart_game() -> void:
 	game_over = false
@@ -165,27 +172,46 @@ func restart_game() -> void:
 	init_grid()
 	spawn_piece()
 	timer.start()
-	queue_redraw()
+	game_rect.queue_redraw()
 
-func _draw() -> void:
+func _on_game_rect_draw() -> void:
+	if not is_instance_valid(game_rect):
+		return
+		
+	# Calculate dynamic cell size based on available rect size to maintain aspect ratio
+	var available_width: float = game_rect.size.x
+	var available_height: float = game_rect.size.y
+	
+	var cell_w: float = available_width / COLS
+	var cell_h: float = available_height / ROWS
+	
+	# Use the smaller dimension to keep cells square
+	var cell_size: float = min(cell_w, cell_h)
+	
+	# Center the grid in the available space
+	var grid_width: float = cell_size * COLS
+	var grid_height: float = cell_size * ROWS
+	var offset_x: float = (available_width - grid_width) / 2.0
+	var offset_y: float = (available_height - grid_height) / 2.0
+
 	# Draw background
-	draw_rect(Rect2(OFFSET_X, OFFSET_Y, COLS * CELL_SIZE, ROWS * CELL_SIZE), Color(0.1, 0.1, 0.1))
+	game_rect.draw_rect(Rect2(offset_x, offset_y, grid_width, grid_height), Color(0.1, 0.1, 0.1))
 	
 	# Draw grid lines
 	for y in range(ROWS + 1):
-		draw_line(Vector2(OFFSET_X, OFFSET_Y + y * CELL_SIZE), Vector2(OFFSET_X + COLS * CELL_SIZE, OFFSET_Y + y * CELL_SIZE), Color(0.2, 0.2, 0.2))
+		game_rect.draw_line(Vector2(offset_x, offset_y + y * cell_size), Vector2(offset_x + grid_width, offset_y + y * cell_size), Color(0.2, 0.2, 0.2))
 	for x in range(COLS + 1):
-		draw_line(Vector2(OFFSET_X + x * CELL_SIZE, OFFSET_Y), Vector2(OFFSET_X + x * CELL_SIZE, OFFSET_Y + ROWS * CELL_SIZE), Color(0.2, 0.2, 0.2))
+		game_rect.draw_line(Vector2(offset_x + x * cell_size, offset_y), Vector2(offset_x + x * cell_size, offset_y + grid_height), Color(0.2, 0.2, 0.2))
 			
 	# Draw locked pieces
 	for y in range(ROWS):
 		for x in range(COLS):
 			if grid[y][x] != null:
-				draw_rect(Rect2(OFFSET_X + x * CELL_SIZE + 1, OFFSET_Y + y * CELL_SIZE + 1, CELL_SIZE - 2, CELL_SIZE - 2), grid[y][x])
+				game_rect.draw_rect(Rect2(offset_x + x * cell_size + 1, offset_y + y * cell_size + 1, cell_size - 2, cell_size - 2), grid[y][x])
 				
 	# Draw current piece
 	if not game_over and current_piece.size() > 0:
 		for y in range(current_piece.size()):
 			for x in range(current_piece[y].size()):
 				if current_piece[y][x]:
-					draw_rect(Rect2(OFFSET_X + (current_x + x) * CELL_SIZE + 1, OFFSET_Y + (current_y + y) * CELL_SIZE + 1, CELL_SIZE - 2, CELL_SIZE - 2), current_color)
+					game_rect.draw_rect(Rect2(offset_x + (current_x + x) * cell_size + 1, offset_y + (current_y + y) * cell_size + 1, cell_size - 2, cell_size - 2), current_color)
