@@ -1,0 +1,25 @@
+# Normalize line endings to LF on checkout, but maintain native line endings in working directory
+* text=auto
+
+# Enforce LF for specific file types
+*.gd text eol=lf
+*.tscn text eol=lf
+*.tres text eol=lf
+*.godot text eol=lf
+*.cfg text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+
+# Treat specific files as binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.svg binary
+*.ttf binary
+*.otf binary
+*.ogg binary
+*.wav binary
+*.mp3 binary
+*.import binary
